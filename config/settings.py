@@ -134,7 +134,7 @@ PORTFOLIO_OWNER_EMAIL = os.environ.get('PORTFOLIO_OWNER_EMAIL', 'your-gmail@gmai
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')  # Critical: Must be smtp.gmail.com
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 465))         # Port 587 for TLS
-EMAIL_USE_TLS = True
+EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
 
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
