@@ -1,10 +1,11 @@
 import os
 import resend
+from django.conf import settings
+from django.http import FileResponse, Http404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.conf import settings
-from django.http import FileResponse, Http404
+
 
 class ContactView(APIView):
     """Receives contact form submissions via HTTP API (Bypasses SMTP port blocking)."""
@@ -26,24 +27,29 @@ class ContactView(APIView):
 
         try:
             resend.Emails.send({
-                "from": "Portfolio Contact ",
-                "to": [recipient],
-                "subject": f"[Portfolio] {subject}",
-                "html": f"""
-                    New Contact Form Submission
-                    Name: {name}
-                    Email: {email}
-                    Subject: {subject}
-                    Message:
-                    {message}
-                """
+                # Note: Clean formatting for Resend sender address
+                'from': 'onboarding@resend.dev',
+                'to': [recipient],
+                'subject': f'[Portfolio] {subject}',
+                'html': f"""
+                    <h3>New Contact Form Submission</h3>
+                    <p><strong>Name:</strong> {name}</p>
+                    <p><strong>Email:</strong> {email}</p>
+                    <p><strong>Subject:</strong> {subject}</p>
+                    <p><strong>Message:</strong></p>
+                    <p>{message}</p>
+                """,
             })
-            return Response({'message': 'Email sent successfully!'}, status=status.HTTP_200_OK)
+            return Response(
+                {'message': 'Email sent successfully!'},
+                status=status.HTTP_200_OK,
+            )
         except Exception as e:
             return Response(
                 {'error': f'Failed to send email: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
 
 class ResumeDownloadView(APIView):
     """Serves resume PDF for download."""
