@@ -1,14 +1,13 @@
 import os
-from django.conf import settings
-from django.core.mail import send_mail
-from django.http import FileResponse, Http404
+import resend
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from django.conf import settings
+from django.http import FileResponse, Http404
 
 class ContactView(APIView):
-    """Receives contact form input and emails it to you."""
+    """Receives contact form submissions via HTTP API (Bypasses SMTP port blocking)."""
 
     def post(self, request):
         name = request.data.get('name')
@@ -22,23 +21,29 @@ class ContactView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        full_body = f"From: {name} ({email})\nSubject: {subject}\n\nMessage:\n{message}"
+        resend.api_key = os.environ.get('RESEND_API_KEY')
+        recipient = os.environ.get('PORTFOLIO_OWNER_EMAIL', 'your-email@gmail.com')
 
         try:
-            send_mail(
-                subject=f"[Portfolio] {subject}",
-                message=full_body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[settings.PORTFOLIO_OWNER_EMAIL],
-                fail_silently=False,
-            )
+            resend.Emails.send({
+                "from": "Portfolio Contact ",
+                "to": [recipient],
+                "subject": f"[Portfolio] {subject}",
+                "html": f"""
+                    New Contact Form Submission
+                    Name: {name}
+                    Email: {email}
+                    Subject: {subject}
+                    Message:
+                    {message}
+                """
+            })
             return Response({'message': 'Email sent successfully!'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
                 {'error': f'Failed to send email: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
 
 class ResumeDownloadView(APIView):
     """Serves resume PDF for download."""
