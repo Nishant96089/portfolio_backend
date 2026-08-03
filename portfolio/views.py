@@ -4,11 +4,20 @@ from django.conf import settings
 from django.http import FileResponse, Http404
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 
+class ContactThrottle(AnonRateThrottle):
+    """Limits unauthenticated contact form submissions to 3 per hour per IP address."""
+
+    rate = '3/hour'
+
+
 class ContactView(APIView):
-    """Receives contact form submissions via HTTP API (Bypasses SMTP port blocking)."""
+    """Receives contact form submissions via HTTP API with spam protection."""
+
+    throttle_classes = [ContactThrottle]
 
     def post(self, request):
         name = request.data.get('name')
@@ -27,7 +36,6 @@ class ContactView(APIView):
 
         try:
             resend.Emails.send({
-                # Note: Clean formatting for Resend sender address
                 'from': 'onboarding@resend.dev',
                 'to': [recipient],
                 'subject': f'[Portfolio] {subject}',
@@ -41,8 +49,7 @@ class ContactView(APIView):
                 """,
             })
             return Response(
-                {'message': 'Email sent successfully!'},
-                status=status.HTTP_200_OK,
+                {'message': 'Email sent successfully!'}, status=status.HTTP_200_OK
             )
         except Exception as e:
             return Response(
