@@ -125,13 +125,18 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# Email Configuration
-PORTFOLIO_OWNER_EMAIL = os.environ.get('PORTFOLIO_OWNER_EMAIL', 'your-email@gmail.com')
+import os
 
+# Owner email (where you receive messages)
+PORTFOLIO_OWNER_EMAIL = os.environ.get('PORTFOLIO_OWNER_EMAIL', 'your-gmail@gmail.com')
+
+# Email SMTP Settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')  # Critical: Must be smtp.gmail.com
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))         # Port 587 for TLS
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'your-email@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '') # App password
+EMAIL_USE_SSL = False
+
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
