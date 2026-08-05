@@ -18,7 +18,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key")
-DEBUG = os.environ.get("DEBUG", "True") == "True"
+# Defaults to False so production is safe by default. Set DEBUG=True locally.
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [".onrender.com", "localhost", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = ["https://*.onrender.com"]
@@ -50,7 +51,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS: the Netlify frontend calls this API from a different origin.
+# Set CORS_ALLOWED_ORIGINS to your Netlify URL(s) to lock it down, e.g.
+#   CORS_ALLOWED_ORIGINS=https://your-site.netlify.app,https://yourdomain.com
+# If unset, all origins are allowed (fine for a public contact form).
+_cors_origins = os.environ.get("CORS_ALLOWED_ORIGINS", "").strip()
+if _cors_origins:
+    CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+    CORS_ALLOW_ALL_ORIGINS = False
+    # Trust these same origins for CSRF (harmless for the token-less DRF API).
+    CSRF_TRUSTED_ORIGINS = CSRF_TRUSTED_ORIGINS + CORS_ALLOWED_ORIGINS
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'config.urls'
 
